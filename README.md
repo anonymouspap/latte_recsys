@@ -1,2 +1,2 @@
 # latte_recsys
-Storage for implementation for Tensor-based Collaborative Filtering With Smooth Ratings Scale paper.
+Storage for implementations used in Tensor-based Collaborative Filtering With Smooth Ratings Scale paper.
