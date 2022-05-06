@@ -31,9 +31,9 @@ To get a local copy up and running follow these simple example steps.
    
 1. To start tuning+training+testing process of ALL models run our code in the following way:
   
-  1.a Pick dataset(*one of the following*) accoding to the hints in code: ["Movielens_1M", "Movielens_10M", "Video_Games", "CDs_and_Vinyl", "Electronics", "Video_Games_nf"], *eg.* Movilens_1M.
+2. Pick dataset(*one of the following*) accoding to the hints in code: ["Movielens_1M", "Movielens_10M", "Video_Games", "CDs_and_Vinyl", "Electronics", "Video_Games_nf"], *eg.* Movilens_1M.
 
-  1.b Run the script in the following fashion: 
+3. Run the script in the following fashion: 
   ```sh
    python3 main.py Movilens_1M > output.txt
    ```
