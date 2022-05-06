@@ -27,13 +27,15 @@ To get a local copy up and running follow these simple example steps.
    pip3 install -r requirements.txt
    ```
    
-3. To start tuning+training+testing process of ALL models run our code in the following way:
+### Execution
+   
+1. To start tuning+training+testing process of ALL models run our code in the following way:
   
-  3.a Pick dataset(*one of the following*) accoding to the hints in code: ["Movielens_1M", "Movielens_10M", "Video_Games", "CDs_and_Vinyl", "Electronics", "Video_Games_nf"], *eg. Movilens_1M*
+  1.a Pick dataset(*one of the following*) accoding to the hints in code: ["Movielens_1M", "Movielens_10M", "Video_Games", "CDs_and_Vinyl", "Electronics", "Video_Games_nf"], *eg.* Movilens_1M.
 
-  3. Run the script in the following fashion: 
+  1.b Run the script in the following fashion: 
   ```sh
-   python3 main.py *Movilens_1M* >output.txt
+   python3 main.py Movilens_1M >output.txt
    ```
 
 <!-- CONTRIBUTING -->
