@@ -35,7 +35,7 @@ To get a local copy up and running follow these simple example steps.
 
   1.b Run the script in the following fashion: 
   ```sh
-   python3 main.py Movilens_1M >output.txt
+   python3 main.py Movilens_1M > output.txt
    ```
 
 <!-- CONTRIBUTING -->
