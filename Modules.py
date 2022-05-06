@@ -1,11 +1,19 @@
+# +
 import gzip
 import tempfile
 from ast import literal_eval
 from  urllib import request
-import pandas as pd
-import numpy as np
 
-from polara import get_movielens_data
+from io import BytesIO
+import numpy as np
+import pandas as pd
+
+try:
+    from pandas.io.common import ZipFile
+except ImportError:
+    from zipfile import ZipFile
+# -
+
 from dataprep import transform_indices
 from polara.preprocessing.dataframes import leave_one_out, reindex
 from evaluation import topn_recommendations
@@ -36,7 +44,7 @@ def read_amazon_data(path=None, name=None):
 
 
 def full_preproccessing(data = None, name="ml-10m.zip", q=0.8):
-    if (data is None):
+    if data is None:
         data = get_movielens_data(name, include_time=True)
     test_timepoint = data['timestamp'].quantile(
     q=q, interpolation='nearest'
@@ -175,3 +183,76 @@ def valid_mlrank(mlrank):
     s, r1, r3 = mlrank
     r2 = r1
     return r1*r2 > r3 and r1*r3 > r2 and r2*r3 > r1
+
+
+# +
+from requests import get
+
+def get_movielens_data(filename=None, get_ratings=True, get_genres=False,
+                       split_genres=True, mdb_mapping=False, get_tags=False, include_time=False):
+    '''Downloads movielens data and stores it in pandas dataframe.
+    '''
+    fields = ['userid', 'movieid', 'rating']
+
+    if include_time:
+        fields.append('timestamp')
+
+    if filename not in ['ml-1m.zip', 'ml-10m.zip']:
+        raise NameError
+        
+    zip_file_url = f'http://files.grouplens.org/datasets/movielens/{filename}'
+    zip_response = get(zip_file_url)
+    zip_contents = BytesIO(zip_response.content)
+
+    ml_data = ml_genres = ml_tags = mapping = None
+    # loading data into memory
+    with ZipFile(zip_contents) as zfile:
+        zip_files = pd.Series(zfile.namelist())
+        zip_file = zip_files[zip_files.str.contains('ratings')].iat[0]
+        is_new_format = ('latest' in zip_file) or ('20m' in zip_file)
+        delimiter = ','
+        header = 0 if is_new_format else None
+        if get_ratings:
+            zdata = zfile.read(zip_file)
+            zdata = zdata.replace(b'::', delimiter.encode())
+            # makes data compatible with pandas c-engine
+            # returns string objects instead of bytes in that case
+            ml_data = pd.read_csv(BytesIO(zdata), sep=delimiter, header=header, engine='c', names=fields, usecols=fields)
+
+        if get_genres:
+            zip_file = zip_files[zip_files.str.contains('movies')].iat[0]
+            zdata =  zfile.read(zip_file)
+            if not is_new_format:
+                # make data compatible with pandas c-engine
+                # pandas returns string objects instead of bytes in that case
+                delimiter = '^'
+                zdata = zdata.replace(b'::', delimiter.encode())
+            genres_data = pd.read_csv(BytesIO(zdata), sep=delimiter, header=header,
+                                      engine='c', encoding='unicode_escape',
+                                      names=['movieid', 'movienm', 'genres'])
+
+            ml_genres = get_split_genres(genres_data) if split_genres else genres_data
+
+        if get_tags:
+            zip_file = zip_files[zip_files.str.contains('/tags')].iat[0] #not genome
+            zdata =  zfile.read(zip_file)
+            if not is_new_format:
+                # make data compatible with pandas c-engine
+                # pandas returns string objects instead of bytes in that case
+                delimiter = '^'
+                zdata = zdata.replace(b'::', delimiter.encode())
+            fields[2] = 'tag'
+            ml_tags = pd.read_csv(BytesIO(zdata), sep=delimiter, header=header,
+                                      engine='c', encoding='latin1',
+                                      names=fields, usecols=range(len(fields)))
+
+        if mdb_mapping and is_new_format:
+            # imdb and tmdb mapping - exists only in ml-latest or 20m datasets
+            zip_file = zip_files[zip_files.str.contains('links')].iat[0]
+            with zfile.open(zip_file) as zdata:
+                mapping = pd.read_csv(zdata, sep=',', header=0, engine='c',
+                                        names=['movieid', 'imdbid', 'tmdbid'])
+
+    res = [data for data in [ml_data, ml_genres, ml_tags, mapping] if data is not None]
+    if len(res)==1: res = res[0]
+    return res
